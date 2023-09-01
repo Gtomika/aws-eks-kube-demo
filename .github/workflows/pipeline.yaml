@@ -1,0 +1,17 @@
+name: deployment-pipeline
+run-name: Pipeline | ${{ github.event.head_commit.message }} | By @${{ github.actor }}
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AWS_REGION: eu-central-1
+  AWS_DEFAULT_REGION: eu-central-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
+
+jobs:
+  test:
+    runs-on: gradle

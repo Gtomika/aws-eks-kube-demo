@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"vpc","Source":"./vpc","Dir":"vpc"},{"Key":"","Source":"","Dir":"."},{"Key":"eks_iam_roles","Source":"./eks_iam_roles","Dir":"eks_iam_roles"}]}
