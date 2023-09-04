@@ -16,6 +16,7 @@ env:
   AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
   AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
   AWS_ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
+  AWS_EKS_MANAGER_ROLE_ARN: ${{ vars.AWS_EKS_MANAGER_ROLE_ARN }}
 
 # docker and aws-cli are installed on the runners by default
 
@@ -66,6 +67,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Assume cluster management role
+        run: |
+          chmod +x ./assume_role.sh
+          ./assume_role.sh
       - name: Generate kubectl config file
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
       - name: Export Kube config file as base64

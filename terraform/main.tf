@@ -15,24 +15,44 @@ module "eks_iam_roles" {
   app_name = var.app_name
 }
 
-resource "aws_eks_cluster" "demo_cluster" {
-  name     = var.cluster_name
-  role_arn = module.eks_iam_roles.eks_cluster_role_arn
-  vpc_config {
-    subnet_ids = concat(module.vpc.public_subnet_ids, module.vpc.private_subnet_ids)
-  }
-}
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 19.0"
 
-# the pods of the app will run in using this configurations
-# another way would be to define EC2 instance types to run pods
-resource "aws_eks_fargate_profile" "demo_fargate_profile" {
-  cluster_name           = aws_eks_cluster.demo_cluster.name
-  fargate_profile_name   = "${var.app_name}-FargateProfile"
-  pod_execution_role_arn = module.eks_iam_roles.pod_role_arn
-  subnet_ids = module.vpc.private_subnet_ids
-  selector { # defines which pods will be run using this profile
-    namespace = var.kube_namespace
+  cluster_name = var.cluster_name
+  cluster_version = "1.19"
+  cluster_endpoint_public_access = true
+  subnets = concat(module.vpc.private_subnet_ids, module.vpc.public_subnet_ids)
+  vpc_id = module.vpc.vpc_id
+
+  # configure fargate profile that runs pods -----------------------------------
+  fargate_pod_execution_role_name = module.eks_iam_roles.pod_role_arn
+  fargate_profiles = {
+    default = {
+      name = "${var.app_name}-FargateProfile"
+      selectors = [{
+        namespace = var.kube_namespace
+      }]
+      subnet_ids = module.vpc.private_subnet_ids
+    }
   }
 
-  depends_on = [aws_eks_cluster.demo_cluster]
+  # Fargate profiles use the cluster primary security group so these are not utilized
+  create_cluster_security_group = false
+  create_node_security_group    = false
+
+  # configure which roles can access the cluster -----------------------------------
+  manage_aws_auth_configmap = true
+  aws_auth_roles = [
+    {  # added so that I can manage the cluster too from my machine
+      rolearn = var.my_cli_role
+      username = admin_cli
+      groups   = ["system:masters"]
+    },
+    { # added so Ci/Cd pipeline can assume this role and deploy
+      rolearn = module.eks_iam_roles.management_role_arn
+      username = ci_ci_pipeline
+      groups   = ["system:masters"]
+    }
+  ]
 }

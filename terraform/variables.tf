@@ -63,3 +63,8 @@ variable "aws_terraform_role_arn" {
   type = string
   default = "arn:aws:iam::844933496707:role/TerraformRole"
 }
+
+variable "my_cli_role" {
+  type = string
+  default = "arn:aws:iam::844933496707:role/gaspar-tamas-cli-role"
+}
