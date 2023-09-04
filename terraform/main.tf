@@ -45,12 +45,12 @@ module "eks" {
   aws_auth_roles = [
     {  # added so that I can manage the cluster too from my machine
       rolearn = var.my_cli_role
-      username = admin_cli
+      username = "admin_cli"
       groups   = ["system:masters"]
     },
     { # added so Ci/Cd pipeline can assume this role and deploy
       rolearn = module.eks_iam_roles.management_role_arn
-      username = ci_ci_pipeline
+      username = "ci_ci_pipeline"
       groups   = ["system:masters"]
     }
   ]
