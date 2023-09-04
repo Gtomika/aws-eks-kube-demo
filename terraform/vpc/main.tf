@@ -8,6 +8,7 @@ resource "aws_vpc" "demo_vpc" {
 }
 
 resource "aws_subnet" "demo_public_subnets" {
+  count = length(var.public_subnet_cidr_blocks)
   vpc_id = aws_vpc.demo_vpc.id
   availability_zone = var.availability_zones[count.index]
   cidr_block = var.public_subnet_cidr_blocks[count.index]
@@ -19,7 +20,7 @@ resource "aws_subnet" "demo_public_subnets" {
 }
 
 resource "aws_subnet" "demo_private_subnets" {
-  count = length(var.availability_zones)
+  count = length(var.private_subnet_cidr_blocks)
   vpc_id = aws_vpc.demo_vpc.id
   availability_zone = var.availability_zones[count.index]
   cidr_block = var.private_subnet_cidr_blocks[count.index]
