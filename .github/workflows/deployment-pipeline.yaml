@@ -69,7 +69,9 @@ jobs:
       - name: Generate kubectl config file
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
       - name: Export Kube config file as base64
-        run: echo "EKS_KUBE_CONFIG=$(cat ~/.kube/config | base64)" >> $GITHUB_ENV
+        run: |
+          EKS_KUBE_CONFIG=$(cat ~/.kube/config | base64)
+          echo "EKS_KUBE_CONFIG=$EKS_KUBE_CONFIG" >> "$GITHUB_ENV"
       - name: Substitute image name into kube yaml file
         run: |
           export IMAGE_NAME="$AWS_ECR_REPOSITORY:kube-demo-${{ github.sha }}"
