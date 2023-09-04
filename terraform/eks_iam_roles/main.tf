@@ -40,7 +40,7 @@ resource "aws_iam_role" "pod_role" {
 
 resource "aws_iam_role_policy_attachment" "pod_role_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy" # managed by AWS, allows to get image from ECR
-  role       = aws_iam_role.pod_role.arn
+  role       = aws_iam_role.pod_role.name
 }
 
 # could attach more policies to the pods, to allow access. This app does not need any more.
