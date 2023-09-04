@@ -1,0 +1,36 @@
+name: infrastructure-destroy-pipeline
+run-name: Infra Destroy Pipeline
+on:
+  workflow_dispatch: # manual trigger
+
+env:
+  AWS_REGION: eu-central-1
+  AWS_DEFAULT_REGION: eu-central-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
+  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
+  AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
+
+# aws-cli are installed on the runners by default
+
+jobs:
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Initialize Terraform
+        run: |
+          cd terraform
+          terraform init
+      - name: Destroy infrastructure
+        run: |
+          terraform destroy -auto-approve
+           -var aws_key_id="$AWS_ACCESS_KEY_ID" \
+           -var aws_secret_key="$AWS_SECRET_ACCESS_KEY" \
+           -var aws_sts_external_id="$AWS_STS_EXTERNAL_KEY" \
+           -var cluster_name="$AWS_EKS_CLUSTER_NAME" \
+           -var kube_namespace="$AWS_EKS_NAMESPACE"

@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: app-container
-          image: kube-demo:1.0
+          image: $IMAGE_NAME
           ports:
             - containerPort: 8080

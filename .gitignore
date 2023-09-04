@@ -35,3 +35,5 @@ out/
 
 ### VS Code ###
 .vscode/
+
+kube/subst-app-deployment.yaml

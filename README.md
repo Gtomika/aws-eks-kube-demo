@@ -20,7 +20,7 @@ Minikube must be installed. Start it and add image to it.
 
 ```
 minikube start
-minikube image load kube-demo:1.0
+minikube image load kube-demo:latest
 ```
 
 On a **separate terminal**, simulate a load balancer. Keep this 
@@ -30,10 +30,13 @@ process running!
 minikube tunnel
 ```
 
-Apply Kubernetes configurations.
+Apply Kubernetes configurations while substituting image name.
 
 ```
-kubectl apply -f kube
+export IMAGE_NAME=kube-demo:latest
+envsubst < kube/app-deployment.yaml > kube/subst-app-deployment.yaml
+kubectl apply -f kube/subst-app-deployment.yaml
+kubectl apply -f kube/app-service.yaml
 ```
 
 Following can be used to check if it's working

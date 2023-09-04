@@ -12,7 +12,7 @@ module "eks_iam_roles" {
 }
 
 resource "aws_eks_cluster" "demo_cluster" {
-  name     = "${var.app_name}-Cluster"
+  name     = var.cluster_name
   role_arn = module.eks_iam_roles.eks_cluster_role_arn
   vpc_config {
     subnet_ids = module.vpc.subnet_ids
@@ -22,7 +22,7 @@ resource "aws_eks_cluster" "demo_cluster" {
 # the pods of the app will run in using this configurations
 # another way would be to define EC2 instance types to run pods
 resource "aws_eks_fargate_profile" "demo_fargate_profile" {
-  cluster_name           = aws_eks_cluster.demo_cluster.name
+  cluster_name           = var.cluster_name
   fargate_profile_name   = "${var.app_name}-FargateProfile"
   pod_execution_role_arn = module.eks_iam_roles.pod_role_arn
   subnet_ids = module.vpc.subnet_ids

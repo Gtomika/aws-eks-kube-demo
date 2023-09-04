@@ -39,7 +39,7 @@ resource "aws_iam_role" "pod_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "pod_role_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy" # managed by AWS
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy" # managed by AWS, allows to get image from ECR
   role       = aws_iam_role.pod_role.arn
 }
 

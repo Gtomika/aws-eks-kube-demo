@@ -13,6 +13,14 @@ variable "app_name" {
   default = "AwsEksKubeDemo"
 }
 
+variable "cluster_name" {
+  type = string
+}
+
+variable "kube_namespace" {
+  type = string
+}
+
 # it's just for assuming role, does not have any other permissions
 variable "aws_key_id" {
   type = string
@@ -35,9 +43,4 @@ variable "aws_sts_external_id" {
 variable "aws_terraform_role_arn" {
   type = string
   default = "arn:aws:iam::844933496707:role/TerraformRole"
-}
-
-variable "kube_namespace" {
-  type = string
-  default = "demo"
 }

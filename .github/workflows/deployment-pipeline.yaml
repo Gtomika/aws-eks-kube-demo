@@ -1,0 +1,86 @@
+name: deployment-pipeline
+run-name: Deployment Pipeline
+on:
+  push:
+    paths:
+      - 'kube/**'
+      - 'src/**'
+
+env:
+  AWS_REGION: eu-central-1
+  AWS_DEFAULT_REGION: eu-central-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
+  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
+  AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
+  AWS_ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
+
+# docker and aws-cli are installed on the runners by default
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: 17
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Run tests with gradle
+        run: ./gradlew test
+
+  build-push-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: 17
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Build Docker image with Gradle
+        run: ./gradlew bootBuildImage
+      - name: List local images
+        run: docker images
+      - name: Authenticate to ECR repo
+        run: aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 844933496707.dkr.ecr.eu-central-1.amazonaws.com
+      - name: Tag image  # image will be named based on commit SHA
+        run: docker tag kube-demo:latest 844933496707.dkr.ecr.eu-central-1.amazonaws.com/tamas-gaspar-docker-image-repo:kube-demo-${{ github.sha }}
+      - name: Publish image to ECR repository
+        run: docker push 844933496707.dkr.ecr.eu-central-1.amazonaws.com/tamas-gaspar-docker-image-repo:kube-demo-${{ github.sha }}
+    needs: test
+
+  deploy:
+    # this job may fail if the infra pipeline has never run before
+    # in this case: wait until infra-pipeline finished and re-run this job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Generate kubectl config file
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
+      - name: Export Kube config file as base64
+        run: export KUBE_CONFIG=$(cat ~/.kube/config | base64)
+      - name: Export image name
+        run: |
+          export IMAGE_NAME="$AWS_ECR_REPOSITORY:kube-demo-${{ github.sha }}"
+          echo "Image name: $IMAGE_NAME"
+      - name: Substitute image name into kube yaml file
+        run: envsubst < kube/app-deployment.yaml > kube/subst-app-deployment.yaml
+      - name: Apply Kube deployment config
+        uses: actions-hub/kubectl@master
+        with:
+          args: apply -f kube/subst-app-deployment.yaml
+      - name: Apply Kube service config
+        uses: actions-hub/kubectl@master
+        with:
+          args: apply -f kube/app-service.yaml
+    needs: build-push-image

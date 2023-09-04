@@ -1,0 +1,79 @@
+name: infrastructure-pipeline
+run-name: Infra Pipeline
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'terraform/**'
+
+env:
+  AWS_REGION: eu-central-1
+  AWS_DEFAULT_REGION: eu-central-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
+  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
+  AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
+
+# aws-cli are installed on the runners by default
+
+jobs:
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Initialize Terraform
+        run: |
+          cd terraform
+          terraform init
+      - name: Validate configuration
+        run: terraform validate
+
+  terraform-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Initialize Terraform
+        run: |
+          cd terraform
+          terraform init
+      - name: Plan changes
+        run: |
+          terraform plan -out plan-${{ github.sha }}.tfplan
+           -var aws_key_id="$AWS_ACCESS_KEY_ID" \
+           -var aws_secret_key="$AWS_SECRET_ACCESS_KEY" \
+           -var aws_sts_external_id="$AWS_STS_EXTERNAL_KEY" \
+           -var cluster_name="$AWS_EKS_CLUSTER_NAME" \
+           -var kube_namespace="$AWS_EKS_NAMESPACE"
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: plan-${{ github.sha }}.tfplan
+    needs: terraform-validate
+
+  terraform-apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download plan artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-plan
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Initialize Terraform
+        run: |
+          cd terraform
+          terraform init
+      - name: Apply infrastructure changes
+        run: terraform apply -auto-approve "./../plan-${{ github.sha }}.tfplan"
+    needs: terraform-plan
