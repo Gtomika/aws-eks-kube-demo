@@ -28,7 +28,7 @@ jobs:
       - name: Destroy infrastructure
         working-directory: terraform
         run: |
-          terraform destroy -auto-approve
+          terraform destroy -auto-approve \
            -var aws_key_id="$AWS_ACCESS_KEY_ID" \
            -var aws_secret_key="$AWS_SECRET_ACCESS_KEY" \
            -var aws_sts_external_id="$AWS_STS_EXTERNAL_KEY" \
