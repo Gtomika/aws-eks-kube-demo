@@ -9,12 +9,6 @@ module "vpc" {
   cluster_name = var.cluster_name
 }
 
-# roles required for control pane and pods
-module "eks_iam_roles" {
-  source = "./eks_iam_roles"
-  app_name = var.app_name
-}
-
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 19.0"
@@ -42,18 +36,16 @@ module "eks" {
 
   # configure which roles can access the cluster -----------------------------------
   manage_aws_auth_configmap = true
-  aws_auth_roles = [
-    {  # added so that I can manage the cluster too from my machine
-      rolearn = var.my_cli_role
-      username = "admin_cli"
-      groups   = ["system:masters"]
-    },
-    { # added so Ci/Cd pipeline can assume this role and deploy
-      rolearn = module.eks_iam_roles.management_role_arn
-      username = "ci_ci_pipeline"
-      groups   = ["system:masters"]
-    }
-  ]
+  aws_auth_roles = [{  # added so that I can manage the cluster too from my machine
+    rolearn = var.my_cli_role_arn
+    username = "admin_cli"
+    groups   = ["system:masters"]
+  }]
+  aws_auth_users = [{
+    rolearn = var.ci_cd_user_arn
+    username = "ci_cd_pipeline"
+    groups   = ["system:masters"]
+  }]
 }
 
 data "aws_eks_cluster" "cluster" {

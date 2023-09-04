@@ -2,28 +2,30 @@
 
 variable "cluster_name" {
   type = string
+  description = "Name of EKS cluster"
 }
 
 variable "kube_namespace" {
   type = string
+  description = "Kube namespace for this demo app"
 }
 
-# it's just for assuming role, does not have any other permissions
 variable "aws_key_id" {
   type = string
   sensitive = true
+  description = "AWS access key ID of the CICD pipeline IAM user"
 }
 
-# it's just for assuming role, does not have any other permissions
 variable "aws_secret_key" {
   type = string
   sensitive = true
+  description = "AWS secret key of the CICD pipeline IAM user"
 }
 
-# additional protection for assuming the role
 variable "aws_sts_external_id" {
   type = string
   sensitive = true
+  description = "Additional protection string when assuming Terraform role"
 }
 
 # Following variables have default values ----------------------------------------------
@@ -36,6 +38,7 @@ variable "aws_region" {
 variable "availability_zones" {
   type = list(string)
   default = ["eu-central-1a", "eu-central-1b"]
+  description = "AZs to place the EKS cluster into"
 }
 
 variable "vpc_cidr_block" {
@@ -56,15 +59,23 @@ variable "private_subnet_cidr_blocks" {
 variable "app_name" {
   type = string
   default = "AwsEksKubeDemo"
+  description = "Used in resource naming"
 }
 
-# role that holds permissions, assumed by Terraform
 variable "aws_terraform_role_arn" {
   type = string
   default = "arn:aws:iam::844933496707:role/TerraformRole"
+  description = "The role that Terraform assumes to plan and modify"
 }
 
-variable "my_cli_role" {
+variable "my_cli_role_arn" {
   type = string
   default = "arn:aws:iam::844933496707:role/gaspar-tamas-cli-role"
+  description = "Role that I use on my machine to manage AWS"
+}
+
+variable "ci_cd_user_arn" {
+  type = string
+  default = "arn:aws:iam::844933496707:user/aws-kube-demo-cicd"
+  description = "IAM user that GitHub actions uses"
 }

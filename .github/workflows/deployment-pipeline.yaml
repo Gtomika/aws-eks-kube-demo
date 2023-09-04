@@ -67,10 +67,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Assume cluster management role
-        run: |
-          chmod +x ./assume_role.sh
-          ./assume_role.sh
       - name: Generate kubectl config file
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
       - name: Export Kube config file as base64
