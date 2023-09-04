@@ -1,6 +1,7 @@
 name: infrastructure-pipeline
 run-name: Infra Pipeline
 on:
+  workflow_dispatch: # manual trigger
   push:
     branches:
       - 'master'

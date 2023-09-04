@@ -34,3 +34,5 @@ jobs:
            -var aws_sts_external_id="$AWS_STS_EXTERNAL_KEY" \
            -var cluster_name="$AWS_EKS_CLUSTER_NAME" \
            -var kube_namespace="$AWS_EKS_NAMESPACE"
+
+# images in ECR repo expire in 1 day and don't need to be cleaned up.

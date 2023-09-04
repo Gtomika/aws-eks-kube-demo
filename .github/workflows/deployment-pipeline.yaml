@@ -1,6 +1,7 @@
 name: deployment-pipeline
 run-name: Deployment Pipeline
 on:
+  workflow_dispatch: # manual trigger
   push:
     paths:
       - 'kube/**'
