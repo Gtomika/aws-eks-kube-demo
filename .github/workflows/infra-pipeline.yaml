@@ -27,10 +27,10 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Initialize Terraform
-        run: |
-          cd terraform
-          terraform init
+        working-directory: terraform
+        run: terraform init
       - name: Validate configuration
+        working-directory: terraform
         run: terraform validate
 
   terraform-plan:
@@ -41,10 +41,10 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Initialize Terraform
-        run: |
-          cd terraform
-          terraform init
+        working-directory: terraform
+        run: terraform init
       - name: Plan changes
+        working-directory: terraform
         run: |
           terraform plan -out plan-${{ github.sha }}.tfplan
            -var aws_key_id="$AWS_ACCESS_KEY_ID" \
@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-plan
-          path: plan-${{ github.sha }}.tfplan
+          path: terraform/plan-${{ github.sha }}.tfplan
     needs: terraform-validate
 
   terraform-apply:
@@ -71,9 +71,9 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Initialize Terraform
-        run: |
-          cd terraform
-          terraform init
+        working-directory: terraform
+        run: terraform init
       - name: Apply infrastructure changes
+        working-directory: terraform
         run: terraform apply -auto-approve "./../plan-${{ github.sha }}.tfplan"
     needs: terraform-plan

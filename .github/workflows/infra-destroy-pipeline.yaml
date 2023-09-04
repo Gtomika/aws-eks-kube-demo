@@ -23,10 +23,10 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
       - name: Initialize Terraform
-        run: |
-          cd terraform
-          terraform init
+        working-directory: terraform
+        run: terraform init
       - name: Destroy infrastructure
+        working-directory: terraform
         run: |
           terraform destroy -auto-approve
            -var aws_key_id="$AWS_ACCESS_KEY_ID" \
