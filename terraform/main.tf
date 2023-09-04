@@ -26,11 +26,13 @@ resource "aws_eks_cluster" "demo_cluster" {
 # the pods of the app will run in using this configurations
 # another way would be to define EC2 instance types to run pods
 resource "aws_eks_fargate_profile" "demo_fargate_profile" {
-  cluster_name           = var.cluster_name
+  cluster_name           = aws_eks_cluster.demo_cluster.name
   fargate_profile_name   = "${var.app_name}-FargateProfile"
   pod_execution_role_arn = module.eks_iam_roles.pod_role_arn
   subnet_ids = module.vpc.private_subnet_ids
   selector { # defines which pods will be run using this profile
     namespace = var.kube_namespace
   }
+
+  depends_on = [aws_eks_cluster.demo_cluster]
 }
