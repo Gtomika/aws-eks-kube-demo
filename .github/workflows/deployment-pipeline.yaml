@@ -78,10 +78,14 @@ jobs:
         run: envsubst < kube/app-deployment.yaml > kube/subst-app-deployment.yaml
       - name: Apply Kube deployment config
         uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: $KUBE_CONFIG
         with:
           args: apply -f kube/subst-app-deployment.yaml
       - name: Apply Kube service config
         uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: $KUBE_CONFIG
         with:
           args: apply -f kube/app-service.yaml
     needs: build-push-image
