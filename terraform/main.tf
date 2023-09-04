@@ -41,6 +41,7 @@ module "eks" {
   create_node_security_group    = false
 
   # configure which roles can access the cluster -----------------------------------
+  create_aws_auth_configmap = true
   manage_aws_auth_configmap = true
   aws_auth_roles = [
     {  # added so that I can manage the cluster too from my machine
