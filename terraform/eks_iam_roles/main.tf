@@ -22,12 +22,12 @@ data "aws_iam_policy_document" "management_role_policy" {
 
 resource "aws_iam_role" "management_role" {
   name = "${var.app_name}-ManagementRole"
-  assume_role_policy = data.aws_iam_policy_document.management_role_trust_policy
+  assume_role_policy = data.aws_iam_policy_document.management_role_trust_policy.json
 }
 
 resource "aws_iam_policy" "eks_describe_policy" {
   name = "${var.app_name}-ManagementPolicy"
-  policy = data.aws_iam_policy_document.management_role_policy
+  policy = data.aws_iam_policy_document.management_role_policy.json
 }
 
 resource "aws_iam_role_policy_attachment" "management_role_attachment" {
