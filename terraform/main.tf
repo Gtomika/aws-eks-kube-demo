@@ -1,3 +1,5 @@
+data "aws_caller_identity" "aws_identity" {}
+
 # VPC and subnets setup in which the control pane and pods will run
 module "vpc" {
   source = "./vpc"
@@ -42,7 +44,7 @@ module "eks" {
     groups   = ["system:masters"]
   }]
   aws_auth_users = [{
-    rolearn = var.ci_cd_user_arn
+    userarn = var.ci_cd_user_arn
     username = "ci_cd_pipeline"
     groups   = ["system:masters"]
   }]
