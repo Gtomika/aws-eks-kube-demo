@@ -67,8 +67,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Generate kubectl config file #sed -e "/command: aws/s?aws?$(which aws)?" -i ~/.kube/config
-        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
+      - name: Generate kubectl config file
+        run: |
+          aws sts get-caller-identity
+          aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
+          cat ~/.kube/config
       - name: Export Kube config file as base64
         run: |
           {
