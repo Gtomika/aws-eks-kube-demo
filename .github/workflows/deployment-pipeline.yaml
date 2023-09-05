@@ -67,10 +67,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Generate kubectl config file
-        run: |
-          aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
-          sed -e "/command: aws/s?aws?$(which aws)?" -i ~/.kube/config
+      - name: Generate kubectl config file #sed -e "/command: aws/s?aws?$(which aws)?" -i ~/.kube/config
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
       - name: Export Kube config file as base64
         run: |
           {
@@ -78,21 +76,17 @@ jobs:
             cat ~/.kube/config | base64
             echo EOF
           } >> "$GITHUB_ENV"
+      - name: Setup kubectl
+        uses: tale/kubectl-action@v1
+        with:
+          base64-kube-config: ${{ env.EKS_KUBE_CONFIG }}
       - name: Substitute image name into kube yaml file
         run: |
           export IMAGE_NAME="$AWS_ECR_REPOSITORY:kube-demo-${{ github.sha }}"
           echo "Image name: $IMAGE_NAME"
           envsubst < kube/app-deployment.yaml > kube/subst-app-deployment.yaml
       - name: Apply Kube deployment config
-        uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ env.EKS_KUBE_CONFIG }}
-        with:
-          args: apply -f kube/subst-app-deployment.yaml
+        run: kubectl apply -f kube/subst-app-deployment.yaml
       - name: Apply Kube service config
-        uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ env.EKS_KUBE_CONFIG }}
-        with:
-          args: apply -f kube/app-service.yaml
+        run: kubectl apply -f kube/app-service.yaml
     needs: build-push-image
