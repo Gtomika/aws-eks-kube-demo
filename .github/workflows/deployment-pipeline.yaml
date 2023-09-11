@@ -64,19 +64,10 @@ jobs:
         uses: actions/checkout@v3
       - name: Generate kubectl config file
         run: aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name ${{ vars.AWS_EKS_CLUSTER_NAME }}
-      - name: Export Kube config file as base64
-        run: |
-          {
-            echo 'EKS_KUBE_CONFIG<<EOF'
-            cat ~/.kube/config | base64
-            echo EOF
-          } >> "$GITHUB_ENV"
       - name: Export image name
         run: echo IMAGE_NAME="${{ vars.AWS_ECR_REPOSITORY }}:kube-demo-${{ github.sha }}" >> "$GITHUB_ENV"
       - name: Install Helm chart
         uses: WyriHaximus/github-action-helm3@v3
         with:
           exec: helm install ${{ vars.HELM_RELEASE_NAME }} ./helm/kube-demo/ --set image.name=${{ env.IMAGE_NAME }} --wait
-          kubeconfig: ${{ env.EKS_KUBE_CONFIG }}
-          overrule_existing_kubeconfig: true
     needs: build-push-image
