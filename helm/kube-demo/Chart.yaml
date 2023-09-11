@@ -1,0 +1,10 @@
+apiVersion: v2
+name: kube-demo
+description: A demo application for Kubernetes and Helm
+type: application
+version: 0.1.0
+appVersion: 1.0.0 # TODO could be based on commit hash
+sources:
+  - https://github.com/Gtomika/aws-eks-kube-demo
+maintainers:
+  - name: Tamas Gaspar

@@ -1,0 +1,11 @@
+replicaCount: 2
+
+image:
+  name: kube-demo:latest
+  pullPolicy: Never
+  containerPort: 8080
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080

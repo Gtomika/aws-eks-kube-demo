@@ -23,34 +23,11 @@ minikube start
 minikube image load kube-demo:latest
 ```
 
-On a **separate terminal**, simulate a load balancer. Keep this 
-process running!
+Install Helm chart to the cluster.
 
 ```
-minikube tunnel
+helm install kube-demo ./helm/kube-demo/
 ```
-
-Return to original terminal. Apply Kubernetes
-configurations while substituting image name.
-
-```
-export IMAGE_NAME=kube-demo:latest
-envsubst < kube/app-deployment.yaml > kube/subst-app-deployment.yaml
-kubectl apply -f kube/subst-app-deployment.yaml
-kubectl apply -f kube/app-service.yaml
-```
-
-Following can be used to check if it's working
-
-```
-kubectl get pods
-kubectl get service app-service
-```
-
-Pods should be `RUNNING` and the app should be available 
-on `http://<EXTERNAL-IP>/api/app-id`. If `EXTERNAL-ID` is `<pending>`, 
-make sure that the minikube tunnel process is successfully 
-running in the separate terminal!
 
 ## How to run on AWS EKS
 
@@ -63,11 +40,11 @@ creating VPC and EKS cluster.
 directories (or manually). This pipeline runs tests, build Docker image, pushes it to ECR and 
 finally: applies Kube config files to the cluster.
 - [Infrastructure destroy pipeline](.github/workflows/infra-destroy-pipeline.yaml): triggered manually 
-to tear down the infrastructure.
+to uninstall Helm release and tear down the infrastructure.
 
-Provisioning the infrastructure takes around 10 minutes due to EKS 
-cluster and nat gateways.
+Provisioning or destroying the infrastructure takes around 10 minutes due to EKS 
+cluster.
 
-Due to EKS and Nat gateway costs, this setup can create a noticable AWS bill if 
+Due to EKS costs, this setup can create a noticable AWS bill if 
 left running. Therefore, infrastructure is destroyed (using appropriate pipeline) 
 when this demo project is not used.

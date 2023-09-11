@@ -4,19 +4,14 @@ on:
   workflow_dispatch: # manual trigger
   push:
     paths:
-      - 'kube/**'
+      - 'helm/**'
       - 'src/**'
 
 env:
-  AWS_REGION: eu-central-1
-  AWS_DEFAULT_REGION: eu-central-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
-  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
-  AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
-  AWS_ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
-  AWS_EKS_MANAGER_ROLE_ARN: ${{ vars.AWS_EKS_MANAGER_ROLE_ARN }}
 
 # docker and aws-cli are installed on the runners by default
 
@@ -55,12 +50,12 @@ jobs:
       - name: Authenticate to ECR repo
         run: aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 844933496707.dkr.ecr.eu-central-1.amazonaws.com
       - name: Tag image  # image will be named based on commit SHA
-        run: docker tag kube-demo:latest 844933496707.dkr.ecr.eu-central-1.amazonaws.com/tamas-gaspar-docker-image-repo:kube-demo-${{ github.sha }}
+        run: docker tag kube-demo:latest ${{ vars.AWS_ECR_REPOSITORY }}:kube-demo-${{ github.sha }}
       - name: Publish image to ECR repository
-        run: docker push 844933496707.dkr.ecr.eu-central-1.amazonaws.com/tamas-gaspar-docker-image-repo:kube-demo-${{ github.sha }}
+        run: docker push ${{ vars.AWS_ECR_REPOSITORY }}:kube-demo-${{ github.sha }}
     needs: test
 
-  deploy:
+  helm-install:
     # this job may fail if the infra pipeline has never run before
     # in this case: wait until infra-pipeline finished and re-run this job
     runs-on: ubuntu-latest
@@ -68,10 +63,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Generate kubectl config file
-        run: |
-          aws sts get-caller-identity
-          aws eks update-kubeconfig --region "$AWS_REGION" --name "$AWS_EKS_CLUSTER_NAME"
-          cat ~/.kube/config
+        run: aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name ${{ vars.AWS_EKS_CLUSTER_NAME }}"
       - name: Export Kube config file as base64
         run: |
           {
@@ -79,17 +71,12 @@ jobs:
             cat ~/.kube/config | base64
             echo EOF
           } >> "$GITHUB_ENV"
-      - name: Setup kubectl
-        uses: tale/kubectl-action@v1
+      - name: Export image name
+        run: echo IMAGE_NAME="${{ vars.AWS_ECR_REPOSITORY }}:kube-demo-${{ github.sha }}" >> "$GITHUB_ENV"
+      - name: Install Helm chart
+        uses: WyriHaximus/github-action-helm3@v3
         with:
-          base64-kube-config: ${{ env.EKS_KUBE_CONFIG }}
-      - name: Substitute image name into kube yaml file
-        run: |
-          export IMAGE_NAME="$AWS_ECR_REPOSITORY:kube-demo-${{ github.sha }}"
-          echo "Image name: $IMAGE_NAME"
-          envsubst < kube/app-deployment.yaml > kube/subst-app-deployment.yaml
-      - name: Apply Kube deployment config
-        run: kubectl apply -f kube/subst-app-deployment.yaml
-      - name: Apply Kube service config
-        run: kubectl apply -f kube/app-service.yaml
+          exec: helm install ${{ vars.HELM_RELEASE_NAME }} ./helm/kube-demo/ --set image.name=${{ env.IMAGE_NAME }} --wait
+          kubeconfig: ${{ env.EKS_KUBE_CONFIG }}
+          overrule_existing_kubeconfig: true
     needs: build-push-image

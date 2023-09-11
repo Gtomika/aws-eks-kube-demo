@@ -4,17 +4,37 @@ on:
   workflow_dispatch: # manual trigger
 
 env:
-  AWS_REGION: eu-central-1
-  AWS_DEFAULT_REGION: eu-central-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
-  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
-  AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
 
 # aws-cli are installed on the runners by default
 
 jobs:
+
+  helm-uninstall:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Generate kubectl config file
+        run: aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name ${{ vars.AWS_EKS_CLUSTER_NAME }}
+      - name: Export Kube config file as base64
+        run: |
+          {
+            echo 'EKS_KUBE_CONFIG<<EOF'
+            cat ~/.kube/config | base64
+            echo EOF
+          } >> "$GITHUB_ENV"
+      - name: Uninstall Helm release
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: helm uninstall ${{ vars.HELM_RELEASE_NAME }} --wait
+          kubeconfig: ${{ env.EKS_KUBE_CONFIG }}
+          overrule_existing_kubeconfig: true
+
   terraform-destroy:
     runs-on: ubuntu-latest
     steps:
@@ -29,10 +49,11 @@ jobs:
         working-directory: terraform
         run: |
           terraform destroy -auto-approve \
-           -var aws_key_id="$AWS_ACCESS_KEY_ID" \
+           -var aws_key_id=$AWS_ACCESS_KEY_ID" \
            -var aws_secret_key="$AWS_SECRET_ACCESS_KEY" \
            -var aws_sts_external_id="$AWS_STS_EXTERNAL_KEY" \
-           -var cluster_name="$AWS_EKS_CLUSTER_NAME" \
-           -var kube_namespace="$AWS_EKS_NAMESPACE"
+           -var cluster_name="${{ vars.AWS_EKS_CLUSTER_NAME }}" \
+           -var kube_namespace="${{ vars.AWS_EKS_NAMESPACE }}"
+    needs: helm-uninstall
 
 # images in ECR repo expire in 1 day and don't need to be cleaned up.

@@ -9,13 +9,11 @@ on:
       - 'terraform/**'
 
 env:
-  AWS_REGION: eu-central-1
-  AWS_DEFAULT_REGION: eu-central-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_STS_EXTERNAL_KEY: ${{ secrets.AWS_STS_EXTERNAL_KEY }}
-  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME }}
-  AWS_EKS_NAMESPACE: ${{ vars.AWS_EKS_NAMESPACE }}
 
 # aws-cli are installed on the runners by default
 
@@ -51,8 +49,8 @@ jobs:
            -var aws_key_id="$AWS_ACCESS_KEY_ID" \
            -var aws_secret_key="$AWS_SECRET_ACCESS_KEY" \
            -var aws_sts_external_id="$AWS_STS_EXTERNAL_KEY" \
-           -var cluster_name="$AWS_EKS_CLUSTER_NAME" \
-           -var kube_namespace="$AWS_EKS_NAMESPACE"
+           -var cluster_name="${{ vars.AWS_EKS_CLUSTER_NAME }}" \
+           -var kube_namespace="${{ vars.AWS_EKS_NAMESPACE }}"
       - name: Upload plan artifact
         uses: actions/upload-artifact@v3
         with:
