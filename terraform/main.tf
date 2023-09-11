@@ -50,6 +50,15 @@ module "eks" {
   }]
 }
 
+# adds the AWS load balancer controller to the cluster
+module "aws_eks_load_balancer_controller" {
+  source = "lablabs/eks-load-balancer-controller/aws"
+  enabled = true
+  cluster_name                     = module.eks.cluster_id
+  cluster_identity_oidc_issuer     = module.eks.oidc_provider
+  cluster_identity_oidc_issuer_arn = module.eks.oidc_provider_arn
+}
+
 data "aws_eks_cluster" "cluster" {
   name = module.eks.cluster_name
   depends_on = [
