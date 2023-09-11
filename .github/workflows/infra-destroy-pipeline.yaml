@@ -14,17 +14,17 @@ env:
 
 jobs:
 
-  helm-uninstall:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Generate kubectl config file
-        run: aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name ${{ vars.AWS_EKS_CLUSTER_NAME }}
-      - name: Uninstall Helm release
-        uses: WyriHaximus/github-action-helm3@v3
-        with:
-          exec: helm uninstall ${{ vars.HELM_RELEASE_NAME }} --wait
+#  helm-uninstall:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v3
+#      - name: Generate kubectl config file
+#        run: aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name ${{ vars.AWS_EKS_CLUSTER_NAME }}
+#      - name: Uninstall Helm release
+#        uses: WyriHaximus/github-action-helm3@v3
+#        with:
+#          exec: helm uninstall ${{ vars.HELM_RELEASE_NAME }} --wait
 
   terraform-destroy:
     runs-on: ubuntu-latest
